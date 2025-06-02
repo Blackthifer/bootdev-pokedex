@@ -8,6 +8,7 @@ import (
 )
 
 func main(){
+	initCommands()
 	inputScanner := bufio.NewScanner(os.Stdin)
 	for true{
 		fmt.Print("Pokedex > ")
@@ -20,7 +21,15 @@ func main(){
 		if len(cleaned) == 0{
 			continue
 		}
-		fmt.Println("Your command was:", cleaned[0])
+		command, ok := allCommands[cleaned[0]]
+		if !ok{
+			fmt.Println("Unkown command")
+			continue
+		}
+		err := command.callback()
+		if err != nil{
+			fmt.Println("err")
+		}
 	}
 }
 
