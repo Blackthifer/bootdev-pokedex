@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+const baseUrl = "https://pokeapi.co/api/v2/"
+
 type config struct{
 	Next string
 	Previous string
