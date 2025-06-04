@@ -10,28 +10,32 @@ import (
 )
 
 type config struct{
-	Arguments []string
+	Cache *pokecache.Cache
 	Next int
 	Previous int
+	Arguments []string
+	CaughtPokemon map[string]pokemon
 }
 
 func main(){
-	mainConfig, mainCache := initPokedex()
+	mainConfig := initPokedex()
 	inputScanner := bufio.NewScanner(os.Stdin)
 	for true{
 		fmt.Print("Pokedex > ")
-		processInput(inputScanner, mainConfig, mainCache)
+		processInput(inputScanner, mainConfig)
 	}
 }
 
-func initPokedex() (*config, *pokecache.Cache){
+func initPokedex() *config{
 	initCommands()
 	conf := config{
+		Cache: pokecache.NewCache(time.Second * 5),
+		CaughtPokemon: map[string]pokemon{},
 		Arguments: nil,
 		Next: 0,
 		Previous: -40,
 	}
-	return &conf, pokecache.NewCache(time.Second * 5)
+	return &conf
 }
 
 func cleanInput(text string) []string{
@@ -42,7 +46,7 @@ func cleanInput(text string) []string{
 	return words
 }
 
-func processInput(inputScanner *bufio.Scanner, mainConfig *config, mainCache *pokecache.Cache){
+func processInput(inputScanner *bufio.Scanner, mainConfig *config){
 	if !inputScanner.Scan() && inputScanner.Err() != nil{
 		fmt.Println("Error getting user input", inputScanner.Err().Error())
 		os.Exit(1)
@@ -58,7 +62,7 @@ func processInput(inputScanner *bufio.Scanner, mainConfig *config, mainCache *po
 		return
 	}
 	mainConfig.Arguments = cleaned[1:]
-	err := command.callback(mainConfig, mainCache)
+	err := command.callback(mainConfig)
 	if err != nil{
 		fmt.Println(err.Error())
 	}

@@ -5,13 +5,12 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
 
 type cliCommand struct{
 	name string
 	description string
-	callback func(*config, *pokecache.Cache) error
+	callback func(*config) error
 }
 
 var allCommands map[string]cliCommand
@@ -45,19 +44,24 @@ func initCommands(){
 		},
 		"catch": {
 			name: "catch",
-			description: "Usage: catch <pokemon>; Attempts to catch the pokemon (this is not saved)",
+			description: "Usage: catch <pokemon>; Attempts to catch the pokemon",
 			callback: commandCatch,
+		},
+		"inspect": {
+			name: "inspect",
+			description: "Usage: inspect <pokemon>; Displays information about the pokemon if you've caught it",
+			callback: commandInspect,
 		},
 	}
 }
 
-func commandExit(conf *config, cache *pokecache.Cache) error{
+func commandExit(conf *config) error{
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config, cache *pokecache.Cache) error{
+func commandHelp(conf *config) error{
 	fmt.Print("Welcome to the Pokedex!\nUsage:\n\n")
 	for _, v := range allCommands{
 		fmt.Printf("%s: %s\n", v.name, v.description)
@@ -65,16 +69,11 @@ func commandHelp(conf *config, cache *pokecache.Cache) error{
 	return nil;
 }
 
-func commandMap(conf *config, cache *pokecache.Cache) error{
+func commandMap(conf *config) error{
 	fullUrl := baseUrl + "location-area/?offset=" + fmt.Sprint(conf.Next)
-	data, ok := cache.Get(fullUrl)
-	if !ok{
-		newData, err := getData(fullUrl)
-		if err != nil{
-			return err
-		}
-		data = newData
-		cache.Add(fullUrl, data)
+	data, err := getData(fullUrl, conf.Cache)
+	if err != nil{
+		return err
 	}
 	locationAreas, err := parseData[namedApiResourceList](data)
 	if err != nil{
@@ -88,20 +87,15 @@ func commandMap(conf *config, cache *pokecache.Cache) error{
 	return nil
 }
 
-func commandMapb(conf *config, cache *pokecache.Cache) error{
+func commandMapb(conf *config) error{
 	if conf.Previous < 0{
 		fmt.Println("You are on the first page")
 		return nil
 	}
 	fullUrl := baseUrl + "location-area/?offset=" + fmt.Sprint(conf.Previous)
-	data, ok := cache.Get(fullUrl)
-	if !ok{
-		newData, err := getData(fullUrl)
-		if err != nil{
-			return err
-		}
-		data = newData
-		cache.Add(fullUrl, data)
+	data, err := getData(fullUrl, conf.Cache)
+	if err != nil{
+		return err
 	}
 	locationAreas, err := parseData[namedApiResourceList](data)
 	if err != nil{
@@ -115,19 +109,15 @@ func commandMapb(conf *config, cache *pokecache.Cache) error{
 	return nil
 }
 
-func commandExplore(conf *config, cache *pokecache.Cache) error{
-	if conf.Arguments == nil || len(conf.Arguments) < 1{
-		return fmt.Errorf("wrong usage:\n%s", allCommands["explore"].description)
+func commandExplore(conf *config) error{
+	err := checkArguments(conf, "explore")
+	if err != nil{
+		return err
 	}
 	fullUrl := baseUrl + "location-area/" + conf.Arguments[0]
-	data, ok := cache.Get(fullUrl)
-	if !ok{
-		newData, err := getData(fullUrl)
-		if err != nil{
-			return err
-		}
-		data = newData
-		cache.Add(fullUrl, data)
+	data, err := getData(fullUrl, conf.Cache)
+	if err != nil{
+		return err
 	}
 	exploredArea, err := parseData[locationArea](data)
 	if err != nil{
@@ -139,19 +129,15 @@ func commandExplore(conf *config, cache *pokecache.Cache) error{
 	return nil
 }
 
-func commandCatch(conf *config, cache *pokecache.Cache) error{
-	if conf.Arguments == nil || len(conf.Arguments) < 1{
-		return fmt.Errorf("wrong usage:\n%s", allCommands["catch"].description)
+func commandCatch(conf *config) error{
+	err := checkArguments(conf, "catch")
+	if err != nil{
+		return err
 	}
 	fullUrl := baseUrl + "pokemon/" + conf.Arguments[0]
-	data, ok := cache.Get(fullUrl)
-	if !ok{
-		newData, err := getData(fullUrl)
-		if err != nil{
-			return err
-		}
-		data = newData
-		cache.Add(fullUrl, data)
+	data, err := getData(fullUrl, conf.Cache)
+	if err != nil{
+		return err
 	}
 	pokemon, err := parseData[pokemon](data)
 	if err != nil{
@@ -168,5 +154,16 @@ func commandCatch(conf *config, cache *pokecache.Cache) error{
 }
 
 func commandInspect(conf *config) error{
+	err := checkArguments(conf, "inspect")
+	if err != nil{
+		return err
+	}
+	return nil
+}
+
+func checkArguments(conf *config, command string) error{
+	if conf.Arguments == nil || len(conf.Arguments) < 1{
+		return fmt.Errorf("wrong usage:\n%s", allCommands[command].description)
+	}
 	return nil
 }

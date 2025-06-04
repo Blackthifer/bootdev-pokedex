@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
 
 const baseUrl = "https://pokeapi.co/api/v2/"
 
-func getData(url string) ([]byte, error){
+func getData(url string, cache *pokecache.Cache) ([]byte, error){
+	cacheData, ok := cache.Get(url)
+	if ok{
+		return cacheData, nil
+	}
 	res, err := http.Get(url)
 	if err != nil{
 		return nil, fmt.Errorf("Error retrieving data: %w", err)
@@ -22,6 +27,7 @@ func getData(url string) ([]byte, error){
 	if err != nil{
 		return nil, fmt.Errorf("Error reading response body: %w", err)
 	}
+	cache.Add(url, data)
 	return data, nil
 }
 
