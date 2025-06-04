@@ -1,14 +1,15 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
+	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
 
 type cliCommand struct{
 	name string
 	description string
-	callback func(*config) error
+	callback func(*config, *pokecache.Cache) error
 }
 
 var allCommands map[string]cliCommand
@@ -38,13 +39,13 @@ func initCommands(){
 	}
 }
 
-func commandExit(conf *config) error{
+func commandExit(conf *config, cache *pokecache.Cache) error{
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config) error{
+func commandHelp(conf *config, cache *pokecache.Cache) error{
 	fmt.Print("Welcome to the Pokedex!\nUsage:\n\n")
 	for _, v := range allCommands{
 		fmt.Printf("%s: %s\n", v.name, v.description)
@@ -52,11 +53,16 @@ func commandHelp(conf *config) error{
 	return nil;
 }
 
-func commandMap(conf *config) error{
+func commandMap(conf *config, cache *pokecache.Cache) error{
 	fullUrl := baseUrl + "location-area/?offset=" + fmt.Sprint(conf.Next)
-	data, err := getData(fullUrl)
-	if err != nil{
-		return err
+	data, ok := cache.Get(fullUrl)
+	if !ok{
+		newData, err := getData(fullUrl)
+		if err != nil{
+			return err
+		}
+		data = newData
+		cache.Add(fullUrl, data)
 	}
 	locationAreas, err := parseNamedList(data)
 	if err != nil{
@@ -70,15 +76,20 @@ func commandMap(conf *config) error{
 	return nil
 }
 
-func commandMapb(conf *config) error{
+func commandMapb(conf *config, cache *pokecache.Cache) error{
 	if conf.Previous < 0{
 		fmt.Println("You are on the first page")
 		return nil
 	}
 	fullUrl := baseUrl + "location-area/?offset=" + fmt.Sprint(conf.Previous)
-	data, err := getData(fullUrl)
-	if err != nil{
-		return err
+	data, ok := cache.Get(fullUrl)
+	if !ok{
+		newData, err := getData(fullUrl)
+		if err != nil{
+			return err
+		}
+		data = newData
+		cache.Add(fullUrl, data)
 	}
 	locationAreas, err := parseNamedList(data)
 	if err != nil{

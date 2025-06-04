@@ -5,24 +5,26 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
 
 func main(){
-	mainConfig := initPokedex()
+	mainConfig, mainCache := initPokedex()
 	inputScanner := bufio.NewScanner(os.Stdin)
 	for true{
 		fmt.Print("Pokedex > ")
-		processInput(inputScanner, mainConfig)
+		processInput(inputScanner, mainConfig, mainCache)
 	}
 }
 
-func initPokedex() *config{
+func initPokedex() (*config, *pokecache.Cache){
 	initCommands()
 	conf := config{
 		Next: 0,
 		Previous: -40,
 	}
-	return &conf
+	return &conf, pokecache.NewCache(time.Second * 5)
 }
 
 func cleanInput(text string) []string{
@@ -33,7 +35,7 @@ func cleanInput(text string) []string{
 	return words
 }
 
-func processInput(inputScanner *bufio.Scanner, mainConfig *config){
+func processInput(inputScanner *bufio.Scanner, mainConfig *config, mainCache *pokecache.Cache){
 	if !inputScanner.Scan() && inputScanner.Err() != nil{
 		fmt.Println("Error getting user input", inputScanner.Err().Error())
 		os.Exit(1)
@@ -48,7 +50,7 @@ func processInput(inputScanner *bufio.Scanner, mainConfig *config){
 		fmt.Println("Unkown command")
 		return
 	}
-	err := command.callback(mainConfig)
+	err := command.callback(mainConfig, mainCache)
 	if err != nil{
 		fmt.Println(err.Error())
 	}
