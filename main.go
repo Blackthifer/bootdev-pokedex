@@ -9,6 +9,12 @@ import (
 	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
 
+type config struct{
+	Arguments []string
+	Next int
+	Previous int
+}
+
 func main(){
 	mainConfig, mainCache := initPokedex()
 	inputScanner := bufio.NewScanner(os.Stdin)
@@ -21,6 +27,7 @@ func main(){
 func initPokedex() (*config, *pokecache.Cache){
 	initCommands()
 	conf := config{
+		Arguments: nil,
 		Next: 0,
 		Previous: -40,
 	}
@@ -50,6 +57,7 @@ func processInput(inputScanner *bufio.Scanner, mainConfig *config, mainCache *po
 		fmt.Println("Unkown command")
 		return
 	}
+	mainConfig.Arguments = cleaned[1:]
 	err := command.callback(mainConfig, mainCache)
 	if err != nil{
 		fmt.Println(err.Error())
