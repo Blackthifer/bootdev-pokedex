@@ -52,6 +52,11 @@ func initCommands(){
 			description: "Usage: inspect <pokemon>; Displays information about the pokemon if you've caught it",
 			callback: commandInspect,
 		},
+		"pokedex": {
+			name: "pokedex",
+			description: "Displays all unique pokemon you have caught",
+			callback: commandPokedex,
+		},
 	}
 }
 
@@ -173,6 +178,17 @@ func commandInspect(conf *config) error{
 	fmt.Println("Types:")
 	for _, t := range pokemon.Types{
 		fmt.Println("  -", t.Type.Name)
+	}
+	return nil
+}
+
+func commandPokedex(conf *config) error{
+	if conf.CaughtPokemon == nil || len(conf.CaughtPokemon) == 0{
+		return fmt.Errorf("You haven't caught any pokemon yet!")
+	}
+	fmt.Println("Your Pokemon:")
+	for name := range conf.CaughtPokemon{
+		fmt.Println("  -", name)
 	}
 	return nil
 }
