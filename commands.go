@@ -143,12 +143,13 @@ func commandCatch(conf *config) error{
 	if err != nil{
 		return err
 	}
-	fmt.Printf("Throwing a Pokeball at %s...\n", conf.Arguments[0])
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon.Name)
 	difficulty := math.Log2(float64(pokemon.BaseExp)) / 1.5
 	if rand.Float64() * 10 > difficulty{
-		fmt.Printf("%s was caught!\n", conf.Arguments[0])
+		fmt.Printf("%s was caught!\n", pokemon.Name)
+		conf.CaughtPokemon[pokemon.Name] = pokemon
 	} else{
-		fmt.Printf("%s escaped!\n", conf.Arguments[0])
+		fmt.Printf("%s escaped!\n", pokemon.Name)
 	}
 	return nil
 }
@@ -157,6 +158,21 @@ func commandInspect(conf *config) error{
 	err := checkArguments(conf, "inspect")
 	if err != nil{
 		return err
+	}
+	pokemon, ok := conf.CaughtPokemon[conf.Arguments[0]]
+	if !ok{
+		return fmt.Errorf("you have not caught that pokemon")
+	}
+	fmt.Println("Name:", pokemon.Name)
+	fmt.Println("Height:", pokemon.Height)
+	fmt.Println("Weight:", pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats{
+		fmt.Printf("  -%s: %v\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, t := range pokemon.Types{
+		fmt.Println("  -", t.Type.Name)
 	}
 	return nil
 }

@@ -59,5 +59,19 @@ type pokemonEncounter struct{
 }
 
 type pokemon struct{
+	Name string `json:"name"`
 	BaseExp int `json:"base_experience"`
+	Height int `json:"height"`
+	Weight int `json:"weight"`
+	Stats []pokemonStat `json:"stats"`
+	Types []pokemonType `json:"types"`
+}
+
+type pokemonStat struct{
+	Stat namedApiResource `json:"stat"`
+	BaseStat int `json:"base_stat"`
+}
+
+type pokemonType struct{
+	Type namedApiResource `json:"type"`
 }
