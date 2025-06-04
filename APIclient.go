@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,8 +10,8 @@ import (
 const baseUrl = "https://pokeapi.co/api/v2/"
 
 type config struct{
-	Next string
-	Previous string
+	Next int
+	Previous int
 }
 
 func getData(url string) ([]byte, error){
@@ -24,4 +25,22 @@ func getData(url string) ([]byte, error){
 		return nil, fmt.Errorf("Error reading response body: %w", err)
 	}
 	return data, nil
+}
+
+type namedApiResourceList struct{
+	List []namedApiResource `json:"results"`
+}
+
+type namedApiResource struct{
+	Name string `json:"name"`
+	Url string `json:"url"`
+}
+
+func parseNamedList(data []byte) ([]namedApiResource, error){
+	var resourceList namedApiResourceList
+	err := json.Unmarshal(data, &resourceList)
+	if err != nil{
+		return nil, fmt.Errorf("Error parsing data: %w", err)
+	}
+	return resourceList.List, nil
 }
