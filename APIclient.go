@@ -51,3 +51,7 @@ type locationArea struct{
 type pokemonEncounter struct{
 	Pokemon namedApiResource `json:"pokemon"`
 }
+
+type pokemon struct{
+	BaseExp int `json:"base_experience"`
+}

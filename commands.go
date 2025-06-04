@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
 	"github.com/Blackthifer/bootdev-pokedex/internal/pokecache"
 )
@@ -38,8 +40,13 @@ func initCommands(){
 		},
 		"explore": {
 			name: "explore",
-			description: "Usage: explore <locationArea>\nDisplays all pokemon found in locationArea",
+			description: "Usage: explore <locationArea>; Displays all pokemon found in locationArea",
 			callback: commandExplore,
+		},
+		"catch": {
+			name: "catch",
+			description: "Usage: catch <pokemon>; Attempts to catch the pokemon (this is not saved)",
+			callback: commandCatch,
 		},
 	}
 }
@@ -129,5 +136,37 @@ func commandExplore(conf *config, cache *pokecache.Cache) error{
 	for _, encounter := range exploredArea.PokemonEncounters{
 		fmt.Println(encounter.Pokemon.Name)
 	}
+	return nil
+}
+
+func commandCatch(conf *config, cache *pokecache.Cache) error{
+	if conf.Arguments == nil || len(conf.Arguments) < 1{
+		return fmt.Errorf("wrong usage:\n%s", allCommands["catch"].description)
+	}
+	fullUrl := baseUrl + "pokemon/" + conf.Arguments[0]
+	data, ok := cache.Get(fullUrl)
+	if !ok{
+		newData, err := getData(fullUrl)
+		if err != nil{
+			return err
+		}
+		data = newData
+		cache.Add(fullUrl, data)
+	}
+	pokemon, err := parseData[pokemon](data)
+	if err != nil{
+		return err
+	}
+	fmt.Printf("Throwing a Pokeball at %s...\n", conf.Arguments[0])
+	difficulty := math.Log2(float64(pokemon.BaseExp)) / 1.5
+	if rand.Float64() * 10 > difficulty{
+		fmt.Printf("%s was caught!\n", conf.Arguments[0])
+	} else{
+		fmt.Printf("%s escaped!\n", conf.Arguments[0])
+	}
+	return nil
+}
+
+func commandInspect(conf *config) error{
 	return nil
 }
